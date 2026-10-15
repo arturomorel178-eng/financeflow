@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FinanceFlow - Gestor de Finanzas Personales</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0b0f19',
+                        darkCard: 'rgba(17, 24, 39, 0.75)',
+                        darkBorder: 'rgba(255, 255, 255, 0.08)',
+                        accentPrimary: '#6366f1',
+                        accentSecondary: '#10b981',
+                        accentDanger: '#ef4444',
+                        accentWarning: '#f59e0b',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0f19;
+            color: #f3f4f6;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .glass-card {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+        .glass-modal {
+            background: rgba(11, 15, 25, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b0f19;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f2937;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #374151;
+        }
+    </style>
+</head>
+<body class="bg-darkBg min-h-screen pb-24 md:pb-12 text-gray-100 antialiased selection:bg-indigo-500 selection:text-white">
+
+    <!-- Top Header -->
+    <header class="sticky top-0 z-40 glass-card border-b border-darkBorder px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                <i class="fa-solid fa-wallet text-white text-lg"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg leading-tight tracking-tight bg-gradient-to-r from-white via-gray-200 to-indigo-300 bg-clip-text text-transparent">FinanceFlow</h1>
+                <p class="text-xs text-gray-400">Control Financiero Inteligente</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <button onclick="openExportModal()" class="p-2 rounded-xl glass-card hover:bg-white/5 text-gray-300 hover:text-white transition-all text-sm flex items-center space-x-1" title="Exportar / Importar">
+                <i class="fa-solid fa-file-arrow-down text-indigo-400"></i>
+                <span class="hidden md:inline text-xs">Datos</span>
+            </button>
+            <div class="w-9 h-9 rounded-full bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-semibold text-sm">
+                <i class="fa-solid fa-user"></i>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 pt-4 md:pt-6">
+        
+        <!-- DASHBOARD VIEW -->
+        <div id="view-dashboard" class="space-y-6 view-section">
+            <!-- Metrics Summary Cards -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                <div class="glass-card rounded-2xl p-4 relative overflow-hidden group hover:border-indigo-500/40 transition-all">
+                    <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-indigo-500/10 rounded-full blur-xl group-hover:bg-indigo-500/20 transition-all"></div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs md:text-sm font-medium text-gray-400">Saldo Total</span>
+                        <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                            <i class="fa-solid fa-scale-balanced text-sm"></i>
+                        </div>
+                    </div>
+                    <h2 id="summary-balance" class="text-xl md:text-2xl font-bold tracking-tight text-white">$0.00</h2>
+                    <div class="mt-2 flex items-center text-xs text-indigo-400 font-medium">
+                        <i class="fa-solid fa-arrow-trend-up mr-1"></i> Actualizado hoy
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-4 relative overflow-hidden group hover:border-emerald-500/40 transition-all">
+                    <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl group-hover:bg-emerald-500/20 transition-all"></div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs md:text-sm font-medium text-gray-400">Ingresos Mes</span>
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                            <i class="fa-solid fa-arrow-down text-sm"></i>
+                        </div>
+                    </div>
+                    <h2 id="summary-income" class="text-xl md:text-2xl font-bold tracking-tight text-emerald-400">$0.00</h2>
+                    <div class="mt-2 flex items-center text-xs text-emerald-400 font-medium">
+                        <i class="fa-solid fa-circle-check mr-1"></i> Entradas registradas
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-4 relative overflow-hidden group hover:border-red-500/40 transition-all">
+                    <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-red-500/10 rounded-full blur-xl group-hover:bg-red-500/20 transition-all"></div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs md:text-sm font-medium text-gray-400">Gastos Mes</span>
+                        <div class="w-8 h-8 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center">
+                            <i class="fa-solid fa-arrow-up text-sm"></i>
+                        </div>
+                    </div>
+                    <h2 id="summary-expense" class="text-xl md:text-2xl font-bold tracking-tight text-red-400">$0.00</h2>
+                    <div class="mt-2 flex items-center text-xs text-red-400 font-medium">
+                        <i class="fa-solid fa-triangle-exclamation mr-1"></i> Salidas totales
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-4 relative overflow-hidden group hover:border-violet-500/40 transition-all col-span-2 lg:col-span-1">
+                    <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-violet-500/10 rounded-full blur-xl group-hover:bg-violet-500/20 transition-all"></div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs md:text-sm font-medium text-gray-400">Ahorro Neto</span>
+                        <div class="w-8 h-8 rounded-lg bg-violet-500/20 text-violet-400 flex items-center justify-center">
+                            <i class="fa-solid fa-piggy-bank text-sm"></i>
+                        </div>
+                    </div>
+                    <h2 id="summary-savings" class="text-xl md:text-2xl font-bold tracking-tight text-violet-300">$0.00</h2>
+                    <div class="mt-2 flex items-center text-xs text-violet-400 font-medium">
+                        <i class="fa-solid fa-shield-halved mr-1"></i> Margen actual
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div class="glass-card rounded-2xl p-4 lg:col-span-2 flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="font-semibold text-white text-base">Flujo Financiero</h3>
+                            <p class="text-xs text-gray-400">Comparativa de ingresos vs gastos mensuales</p>
+                        </div>
+                        <div class="bg-darkBg/60 px-3 py-1 rounded-xl border border-darkBorder text-xs text-gray-300">
+                            Últimos 6 meses
+                        </div>
+                    </div>
+                    <div class="relative h-64 md:h-72 w-full">
+                        <canvas id="monthlyFlowChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-4 flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="font-semibold text-white text-base">Gastos por Categoría</h3>
+                            <p class="text-xs text-gray-400">Distribución porcentual</p>
+                        </div>
+                    </div>
+                    <div class="relative h-60 md:h-64 w-full flex items-center justify-center">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions Preview -->
+            <div class="glass-card rounded-2xl p-4 md:p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-semibold text-white text-base">Últimas Transacciones</h3>
+                    <button onclick="switchTab('transactions')" class="text-xs text-indigo-400 hover:text-indigo-300 font-medium flex items-center space-x-1">
+                        <span>Ver todas</span>
+                        <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    </button>
+                </div>
+                <div id="recent-transactions-list" class="space-y-3">
+                    <!-- Dynamic Items -->
+                </div>
+            </div>
+        </div>
+
+        <!-- TRANSACTIONS VIEW -->
+        <div id="view-transactions" class="space-y-6 view-section hidden">
+            <div class="glass-card rounded-2xl p-4 md:p-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-white tracking-tight">Gestión de Transacciones</h2>
+                        <p class="text-xs text-gray-400">Registra, filtra y administra todos tus movimientos financieros</p>
+                    </div>
+                    <button onclick="openTransactionModal()" class="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-medium px-4 py-2.5 rounded-xl shadow-lg shadow-indigo-600/30 flex items-center justify-center space-x-2 text-sm transition-all">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Nueva Transacción</span>
+                    </button>
+                </div>
+
+                <!-- Filters Bar -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Buscar</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                            </span>
+                            <input type="text" id="filter-search" oninput="applyFilters()" placeholder="Descripción..." class="w-full pl-9 pr-3 py-2 bg-darkBg/60 border border-darkBorder rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-white placeholder-gray-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Tipo</label>
+                        <select id="filter-type" onchange="applyFilters()" class="w-full px-3 py-2 bg-darkBg/60 border border-darkBorder rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-white">
+                            <option value="">Todos los tipos</option>
+                            <option value="income">Ingresos</option>
+                            <option value="expense">Gastos</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Método de Pago</label>
+                        <select id="filter-payment" onchange="applyFilters()" class="w-full px-3 py-2 bg-darkBg/60 border border-darkBorder rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-white">
+                            <option value="">Todos los métodos</option>
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Tarjeta de Crédito">Tarjeta de Crédito</option>
+                            <option value="Tarjeta de Débito">Tarjeta de Débito</option>
+                            <option value="Transferencia Bancaria">Transferencia Bancaria</option>
+                            <option value="Binance/Crypto">Binance/Crypto</option>
+                            <option value="PayPal">PayPal</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Categoría</label>
+                        <select id="filter-category" onchange="applyFilters()" class="w-full px-3 py-2 bg-darkBg/60 border border-darkBorder rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-white">
+                            <option value="">Todas las categorías</option>
+                            <option value="Alimentación">Alimentación</option>
+                            <option value="Vivienda">Vivienda</option>
+                            <option value="Transporte">Transporte</option>
+                            <option value="Entretenimiento">Entretenimiento</option>
+                            <option value="Salud">Salud</option>
+                            <option value="Salario">Salario</option>
+                            <option value="Inversiones">Inversiones</option>
+                            <option value="Freelance">Freelance</option>
+                            <option value="Otros">Otros</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Transactions Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-darkBg/40 text-gray-400 uppercase text-[10px] tracking-wider border-b border-darkBorder">
+                            <tr>
+                                <th class="py-3 px-4 font-semibold">Descripción / Categoría</th>
+                                <th class="py-3 px-4 font-semibold">Método</th>
+                                <th class="py-3 px-4 font-semibold">Fecha</th>
+                                <th class="py-3 px-4 font-semibold text-right">Monto</th>
+                                <th class="py-3 px-4 font-semibold text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-table-body" class="divide-y divide-darkBorder">
+                            <!-- Rows inserted dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="no-transactions" class="hidden py-12 text-center text-gray-400">
+                    <i class="fa-solid fa-receipt text-3xl mb-2 text-gray-600"></i>
+                    <p class="text-sm">No se encontraron transacciones registradas.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- BUDGETS VIEW -->
+        <div id="view-budgets" class="space-y-6 view-section hidden">
+            <div class="glass-card rounded-2xl p-4 md:p-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-white tracking-tight">Presupuestos Mensuales</h2>
+                        <p class="text-xs text-gray-400">Define topes de gastos por categoría y controla tu consumo</p>
+                    </div>
+                    <button onclick="openBudgetModal()" class="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-medium px-4 py-2.5 rounded-xl shadow-lg shadow-indigo-600/30 flex items-center justify-center space-x-2 text-sm transition-all">
+                        <i class="fa-solid fa-sliders"></i>
+                        <span>Configurar Presupuestos</span>
+                    </button>
+                </div>
+
+                <div id="budgets-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Budget cards inserted dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- SAVINGS & GOALS VIEW -->
+        <div id="view-savings" class="space-y-6 view-section hidden">
+            <div class="glass-card rounded-2xl p-4 md:p-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-white tracking-tight">Metas y Ahorro</h2>
+                        <p class="text-xs text-gray-400">Crea objetivos financieros y abona fondos para alcanzarlos</p>
+                    </div>
+                    <button onclick="openGoalModal()" class="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-medium px-4 py-2.5 rounded-xl shadow-lg shadow-indigo-600/30 flex items-center justify-center space-x-2 text-sm transition-all">
+                        <i class="fa-solid fa-bullseye"></i>
+                        <span>Nueva Meta</span>
+                    </button>
+                </div>
+
+                <div id="savings-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Savings goal cards inserted dynamically -->
+                </div>
+                <div id="no-goals" class="hidden py-12 text-center text-gray-400">
+                    <i class="fa-solid fa-flag-checkered text-3xl mb-2 text-gray-600"></i>
+                    <p class="text-sm">Aún no tienes metas de ahorro configuradas.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Floating Action Button (FAB) for Mobile -->
+    <button onclick="openTransactionModal()" class="md:hidden fixed right-5 bottom-20 z-40 w-14 h-14 bg-gradient-to-tr from-indigo-600 to-violet-500 text-white rounded-full shadow-2xl shadow-indigo-500/50 flex items-center justify-center text-xl hover:scale-105 active:scale-95 transition-all">
+        <i class="fa-solid fa-plus"></i>
+    </button>
+
+    <!-- Bottom Navigation Bar (Mobile Optimized) -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-30 glass-card border-t border-darkBorder px-4 py-2 flex items-center justify-around bg-darkBg/90">
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn flex flex-col items-center justify-center py-1 px-3 text-indigo-400 transition-all">
+            <i class="fa-solid fa-chart-pie text-lg mb-0.5"></i>
+            <span class="text-[10px] font-medium">Panel</span>
+        </button>
+        <button onclick="switchTab('transactions')" id="nav-transactions" class="nav-btn flex flex-col items-center justify-center py-1 px-3 text-gray-400 hover:text-gray-200 transition-all">
+            <i class="fa-solid fa-wallet text-lg mb-0.5"></i>
+            <span class="text-[10px] font-medium">Movimientos</span>
+        </button>
+        <button onclick="switchTab('budgets')" id="nav-budgets" class="nav-btn flex flex-col items-center justify-center py-1 px-3 text-gray-400 hover:text-gray-200 transition-all">
+            <i class="fa-solid fa-chart-line text-lg mb-0.5"></i>
+            <span class="text-[10px] font-medium">Presupuesto</span>
+        </button>
+        <button onclick="switchTab('savings')" id="nav-savings" class="nav-btn flex flex-col items-center justify-center py-1 px-3 text-gray-400 hover:text-gray-200 transition-all">
+            <i class="fa-solid fa-piggy-bank text-lg mb-0.5"></i>
+            <span class="text-[10px] font-medium">Ahorros</span>
+        </button>
+    </nav>
+
+    <!-- Desktop Nav Links -->
+    <div class="hidden md:flex max-w-7xl mx-auto px-4 mt-6">
+        <div class="glass-card rounded-2xl p-2 flex space-x-2">
+            <button onclick="switchTab('dashboard')" id="desk-nav-dashboard" class="desk-nav-btn px-4 py-2 rounded-xl bg-indigo-600 text-white font-medium text-sm transition-all flex items-center space-x-2">
+                <i class="fa-solid fa-chart-pie"></i><span>Panel Principal</span>
+            </button>
+            <button onclick="switchTab('transactions')" id="desk-nav-transactions" class="desk-nav-btn px-4 py-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 font-medium text-sm transition-all flex items-center space-x-2">
+                <i class="fa-solid fa-wallet"></i><span>Transacciones</span>
+            </button>
+            <button onclick="switchTab('budgets')" id="desk-nav-budgets" class="desk-nav-btn px-4 py-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 font-medium text-sm transition-all flex items-center space-x-2">
+                <i class="fa-solid fa-chart-line"></i><span>Presupuestos</span>
+            </button>
+            <button onclick="switchTab('savings')" id="desk-nav-savings" class="desk-nav-btn px-4 py-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 font-medium text-sm transition-all flex items-center space-x-2">
+                <i class="fa-solid fa-piggy-bank"></i><span>Ahorros y Metas</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL: Add/Edit Transaction -->
+    <div id="transaction-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm hidden">
+        <div class="glass-modal w-full max-w-md rounded-3xl p-6 border border-darkBorder shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h3 id="transaction-modal-title" class="text-lg font-bold text-white">Nueva Transacción</h3>
+                <button onclick="closeTransactionModal()" class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="transaction-form" onsubmit="saveTransaction(event)" class="space-y-4">
+                <input type="hidden" id="tx-id">
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Tipo de Movimiento</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" id="type-income-btn" onclick="setTxType('income')" class="py-2.5 rounded-xl border border-darkBorder bg-darkBg/60 text-emerald-400 font-semibold text-sm transition-all flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-arrow-down"></i><span>Ingreso</span>
+                        </button>
+                        <button type="button" id="type-expense-btn" onclick="setTxType('expense')" class="py-2.5 rounded-xl border border-darkBorder bg-darkBg/60 text-red-400 font-semibold text-sm transition-all flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-arrow-up"></i><span>Gasto</span>
+                        </button>
+                    </div>
+                    <input type="hidden" id="tx-type" value="expense">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Monto ($)</label>
+                    <input type="number" step="0.01" id="tx-amount" required placeholder="0.00" class="w-full px-4 py-2.5 bg-darkBg/60 border border-darkBorder rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-white font-semibold">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Categoría</label>
+                        <select id="tx-category" required class="w-full px-3 py-2.5 bg-darkBg/60 border border-darkBorder rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-white">
+                            <option value="Alimentación">Alimentación</option>
+                            <option value="Vivienda">Vivienda</option>
+                            <option value="Transporte">Transporte</option>
+                            <option value="Entretenimiento">Entretenimiento</option>
+                            <option value="Salud">Salud</option>
+                            <option value="Salario">Salario</option>
+                            <option value="Inversiones">Inversiones</option>
+                            <option value="Freelance">Freelance</option>
+                            <option value="Otros">Otros</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Método de Pago</label>
+                        <select id="tx-payment" required class="w-full px-3 py-2.5 bg-darkBg/60 border border-darkBorder rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-white">
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Tarjeta de Crédito">Tarjeta de Crédito</option>
+                            <option value="Tarjeta de Débito">Tarjeta de Débito</option>
+                            <option value="Transferencia Bancaria">Transferencia Bancaria</option>
+                            <option value="Binance/Crypto">Binance/Crypto</option>
+                            <option value="PayPal">PayPal</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Fecha</label>
+                    <input type="date" id="tx-date" required class="w-full px-3 py-2.5 bg-darkBg/60 border border-darkBorder rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Descripción / Nota</label>
+                    <input type="text" id="tx-description" required placeholder="Ej. Supermercado semanal..." class="w-full px-4 py-2.5 bg-darkBg/60 border border-darkBorder rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-white">
+                </div>
+                <div class="flex space-x-3 pt-3">
+                    <button type="button" onclick="closeTransactionModal()" class="flex-1 py-3 rounded-xl border border-darkBorder hover:bg-white/5 font-medium text-sm text-gray-300 transition-all">Cancelar</button>
+                    <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-medium text-sm shadow-lg shadow-indigo-600/30 transition-all">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Budget Config -->
+    <div id="budget-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm hidden">
+        <div class="glass-modal w-full max-w-lg rounded-3xl p-6 border border-darkBorder shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-white">Configurar Presupuestos Mensuales</h3>
+                <button onclick="closeBudgetModal()" class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="budget-form" onsubmit="saveBudgets(event)" class="space-y-4">
+                <div class="max-h-80 overflow-y-auto pr-2 space-y-3" id="budget-inputs-list">
+                    <!-- Dynamic budget inputs -->
+                </div>
+                <div class="flex space-x-3 pt-3">
+                    <button type="button" onclick="closeBudgetModal()" class="flex-1 py-3 rounded-xl border border-darkBorder hover:bg-white/5 font-medium text-sm text-gray-300 transition-all">Cancelar</button>
+                    <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-medium text-sm shadow-lg shadow-indigo-600/30 transition-all">Guardar Presupuestos</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Savings Goal Create/Edit -->
+    <div id="goal-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm hidden">
+        <div class="glass-modal w-full max-w-md rounded-3xl p-6 border border-darkBorder shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h3 id="goal-modal-title" class="text-lg font-bold text-white">Nueva Meta de Ahorro</h3>
+                <button onclick="closeGoalModal()" class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="goal-form" onsubmit="saveGoal(event)" class="space-y-4">
+                <input type="hidden" id="goal-id">
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Nombre de la Meta</label>
+                    <input type="text" id="goal-name" required placeholder="Ej. Viaje, Fondo de Emergencia..." class="w-full px-4 py-2.5 bg-darkBg/60 border border-darkBorder rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-white">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Monto Objetivo ($)</label>
+                        <input type="number" step="0.01" id="goal-target" required placeholder="5000.00" class="w-full px-4 py-2.5 bg-darkBg/60 border border-darkBorder rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Ahorrado Inicial ($)</label>
+                        <input type="number" step="0.01" id="goal-current" value="0" placeholder="0.00" class="w-full px-4 py-2.5 bg-darkBg/60 border border-darkBorder rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-white">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Fecha Límite</label>
+                    <input type="date" id="goal-deadline" required class="w-full px-3 py-2.5 bg-darkBg/60 border border-darkBorder rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Categoría / Icono</label>
+                    <select id="goal-category" class="w-full px-3 py-2.5 bg-darkBg/60 border border-darkBorder rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-white">
+                        <option value="Viajes">Viajes</option>
+                        <option value="Emergencia">Emergencia</option>
+                        <option value="Vehículo">Vehículo</option>
+                        <option value="Inversión">Inversión</option>
+                        <option value="Tecnología">Tecnología</option>
+                        <option value="Vivienda">Vivienda</option>
+                        <option value="Otro">Otro</option>
+                    </select>
+                </div>
+                <div class="flex space-x-3 pt-3">
+                    <button type="button" onclick="closeGoalModal()" class="flex-1 py-3 rounded-xl border border-darkBorder hover:bg-white/5 font-medium text-sm text-gray-300 transition-all">Cancelar</button>
+                    <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-medium text-sm shadow-lg shadow-indigo-600/30 transition-all">Guardar Meta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Add/Withdraw Funds to Goal -->
+    <div id="fund-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm hidden">
+        <div class="glass-modal w-full max-w-sm rounded-3xl p-6 border border-darkBorder shadow-2xl">
+            <h3 id="fund-modal-title" class="text-lg font-bold text-white mb-2">Abonar Fondos</h3>
+            <p id="fund-goal-subtitle" class="text-xs text-gray-400 mb-4">Actualiza el saldo de tu meta</p>
+            <form id="fund-form" onsubmit="processFund(event)" class="space-y-4">
+                <input type="hidden" id="fund-goal-id">
+                <input type="hidden" id="fund-action" value="add">
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Monto ($)</label>
+                    <input type="number" step="0.01" id="fund-amount" required placeholder="0.00" class="w-full px-4 py-2.5 bg-darkBg/60 border border-darkBorder rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-white font-semibold">
+                </div>
+                <div class="flex space-x-3 pt-3">
+                    <button type="button" onclick="closeFundModal()" class="flex-1 py-3 rounded-xl border border-darkBorder hover:bg-white/5 font-medium text-sm text-gray-300 transition-all">Cancelar</button>
+                    <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-medium text-sm shadow-lg shadow-indigo-600/30 transition-all">Confirmar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Export / Import -->
+    <div id="export-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm hidden">
+        <div class="glass-modal w-full max-w-md rounded-3xl p-6 border border-darkBorder shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-white">Exportar e Importar Datos</h3>
+                <button onclick="closeExportModal()" class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <p class="text-xs text-gray-400 mb-2 font-medium">Exportar tus registros financieros</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="exportJSON()" class="py-2.5 px-4 rounded-xl glass-card hover:bg-white/5 text-indigo-400 font-medium text-sm border border-darkBorder flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-code"></i><span>JSON</span>
+                        </button>
+                        <button onclick="exportCSV()" class="py-2.5 px-4 rounded-xl glass-card hover:bg-white/5 text-emerald-400 font-medium text-sm border border-darkBorder flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-file-csv"></i><span>CSV</span>
+                        </button>
+                    </div>
+                </div>
+                <hr class="border-darkBorder">
+                <div>
+                    <p class="text-xs text-gray-400 mb-2 font-medium">Importar archivo JSON</p>
+                    <input type="file" id="import-file" accept=".json" onchange="importJSON(event)" class="w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-24 md:bottom-6 right-5 z-50 glass-card px-4 py-3 rounded-2xl shadow-2xl border border-indigo-500/30 flex items-center space-x-3 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div id="toast-icon" class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <i class="fa-solid fa-check"></i>
+        </div>
+        <div>
+            <h4 id="toast-title" class="text-sm font-bold text-white">Éxito</h4>
+            <p id="toast-desc" class="text-xs text-gray-300">Operación realizada correctamente.</p>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        let appData = {
+            transactions: [],
+            budgets: {
+                "Alimentación": 400,
+                "Vivienda": 800,
+                "Transporte": 200,
+                "Entretenimiento": 150,
+                "Salud": 200,
+                "Otros": 100
+            },
+            goals: []
+        };
+
+        let monthlyFlowChartInstance = null;
+        let categoryChartInstance = null;
+
+        window.onload = function() {
+            loadFromLocalStorage();
+            document.getElementById('tx-date').valueAsDate = new Date();
+            updateDashboard();
+            renderTransactions();
+            renderBudgets();
+            renderGoals();
+            initCharts();
+        };
+
+        function saveToLocalStorage() {
+            localStorage.setItem('financeFlow_data', JSON.stringify(appData));
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('financeFlow_data');
+            if (saved) {
+                try {
+                    appData = JSON.parse(saved);
+                } catch(e) {
+                    console.error("Error parsing localStorage data", e);
+                }
+            } else {
+                appData.transactions = [
+                    { id: '1', type: 'income', amount: 3200, category: 'Salario', payment: 'Transferencia Bancaria', date: '2026-10-01', description: 'Nómina mensual' },
+                    { id: '2', type: 'expense', amount: 350, category: 'Alimentación', payment: 'Tarjeta de Débito', date: '2026-10-03', description: 'Supermercado central' },
+                    { id: '3', type: 'expense', amount: 750, category: 'Vivienda', payment: 'Transferencia Bancaria', date: '2026-10-05', description: 'Alquiler apartamento' },
+                    { id: '4', type: 'income', amount: 450, category: 'Freelance', payment: 'Binance/Crypto', date: '2026-10-10', description: 'Diseño web UI/UX' },
+                    { id: '5', type: 'expense', amount: 45, category: 'Entretenimiento', payment: 'Tarjeta de Crédito', date: '2026-10-12', description: 'Cine y cena' }
+                ];
+                appData.goals = [
+                    { id: 'g1', name: 'Fondo de Emergencia', target: 5000, current: 2400, deadline: '2026-12-31', category: 'Emergencia' },
+                    { id: 'g2', name: 'Viaje a Europa', target: 3000, current: 1250, deadline: '2027-06-30', category: 'Viajes' }
+                ];
+                saveToLocalStorage();
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-indigo-400');
+                btn.classList.add('text-gray-400');
+            });
+            const mobileBtn = document.getElementById(`nav-${tabId}`);
+            if (mobileBtn) {
+                mobileBtn.classList.remove('text-gray-400');
+                mobileBtn.classList.add('text-indigo-400');
+            }
+
+            document.querySelectorAll('.desk-nav-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white');
+                btn.classList.add('text-gray-400', 'hover:text-white', 'hover:bg-white/5');
+            });
+            const deskBtn = document.getElementById(`desk-nav-${tabId}`);
+            if (deskBtn) {
+                deskBtn.classList.remove('text-gray-400', 'hover:text-white', 'hover:bg-white/5');
+                deskBtn.classList.add('bg-indigo-600', 'text-white');
+            }
+
+            if (tabId === 'dashboard') {
+                updateDashboard();
+            }
+        }
+
+        function showToast(title, desc, isError = false) {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            document.getElementById('toast-title').innerText = title;
+            document.getElementById('toast-desc').innerText = desc;
+
+            if (isError) {
+                icon.className = 'w-8 h-8 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center';
+                icon.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            } else {
+                icon.className = 'w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center';
+                icon.innerHTML = '<i class="fa-solid fa-check"></i>';
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        function updateDashboard() {
+            let totalIncome = 0;
+            let totalExpense = 0;
+
+            appData.transactions.forEach(tx => {
+                const amt = parseFloat(tx.amount) || 0;
+                if (tx.type === 'income') totalIncome += amt;
+                else totalExpense += amt;
+            });
+
+            const netSavings = totalIncome - totalExpense;
+            const balance = netSavings;
+
+            document.getElementById('summary-balance').innerText = formatCurrency(balance);
+            document.getElementById('summary-income').innerText = formatCurrency(totalIncome);
+            document.getElementById('summary-expense').innerText = formatCurrency(totalExpense);
+            document.getElementById('summary-savings').innerText = formatCurrency(netSavings);
+
+            renderRecentTransactions();
+            updateCharts();
+        }
+
+        function formatCurrency(amount) {
+            return '$' + amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function openTransactionModal(txId = null) {
+            const modal = document.getElementById('transaction-modal');
+            modal.classList.remove('hidden');
+            if (txId) {
+                document.getElementById('transaction-modal-title').innerText = 'Editar Transacción';
+                const tx = appData.transactions.find(t => t.id === txId);
+                if (tx) {
+                    document.getElementById('tx-id').value = tx.id;
+                    setTxType(tx.type);
+                    document.getElementById('tx-amount').value = tx.amount;
+                    document.getElementById('tx-category').value = tx.category;
+                    document.getElementById('tx-payment').value = tx.payment;
+                    document.getElementById('tx-date').value = tx.date;
+                    document.getElementById('tx-description').value = tx.description;
+                }
+            } else {
+                document.getElementById('transaction-modal-title').innerText = 'Nueva Transacción';
+                document.getElementById('transaction-form').reset();
+                document.getElementById('tx-id').value = '';
+                setTxType('expense');
+                document.getElementById('tx-date').valueAsDate = new Date();
+            }
+        }
+
+        function closeTransactionModal() {
+            document.getElementById('transaction-modal').classList.add('hidden');
+        }
+
+        function setTxType(type) {
+            document.getElementById('tx-type').value = type;
+            const incBtn = document.getElementById('type-income-btn');
+            const expBtn = document.getElementById('type-expense-btn');
+            if (type === 'income') {
+                incBtn.className = 'py-2.5 rounded-xl border border-emerald-500/50 bg-emerald-500/20 text-emerald-400 font-semibold text-sm transition-all flex items-center justify-center space-x-2';
+                expBtn.className = 'py-2.5 rounded-xl border border-darkBorder bg-darkBg/60 text-gray-400 font-semibold text-sm transition-all flex items-center justify-center space-x-2';
+            } else {
+                expBtn.className = 'py-2.5 rounded-xl border border-red-500/50 bg-red-500/20 text-red-400 font-semibold text-sm transition-all flex items-center justify-center space-x-2';
+                incBtn.className = 'py-2.5 rounded-xl border border-darkBorder bg-darkBg/60 text-gray-400 font-semibold text-sm transition-all flex items-center justify-center space-x-2';
+            }
+        }
+
+        function saveTransaction(e) {
+            e.preventDefault();
+            const id = document.getElementById('tx-id').value;
+            const type = document.getElementById('tx-type').value;
+            const amount = parseFloat(document.getElementById('tx-amount').value);
+            const category = document.getElementById('tx-category').value;
+            const payment = document.getElementById('tx-payment').value;
+            const date = document.getElementById('tx-date').value;
+            const description = document.getElementById('tx-description').value;
+
+            if (id) {
+                const index = appData.transactions.findIndex(t => t.id === id);
+                if (index !== -1) {
+                    appData.transactions[index] = { id, type, amount, category, payment, date, description };
+                }
+                showToast('Actualizado', 'Transacción modificada correctamente.');
+            } else {
+                const newTx = {
+                    id: 'tx_' + Date.now(),
+                    type, amount, category, payment, date, description
+                };
+                appData.transactions.unshift(newTx);
+                showToast('Registrado', 'Transacción añadida exitosamente.');
+            }
+
+            saveToLocalStorage();
+            closeTransactionModal();
+            updateDashboard();
+            renderTransactions();
+            renderBudgets();
+        }
+
+        function deleteTransaction(id) {
+            if (confirm('¿Estás seguro de eliminar esta transacción?')) {
+                appData.transactions = appData.transactions.filter(t => t.id !== id);
+                saveToLocalStorage();
+                updateDashboard();
+                renderTransactions();
+                renderBudgets();
+                showToast('Eliminado', 'Transacción borrada.', true);
+            }
+        }
+
+        function renderTransactions() {
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const search = document.getElementById('filter-search').value.toLowerCase();
+            const typeFilter = document.getElementById('filter-type').value;
+            const paymentFilter = document.getElementById('filter-payment').value;
+            const categoryFilter = document.getElementById('filter-category').value;
+
+            const filtered = appData.transactions.filter(tx => {
+                const matchesSearch = tx.description.toLowerCase().includes(search) || tx.category.toLowerCase().includes(search);
+                const matchesType = typeFilter === '' || tx.type === typeFilter;
+                const matchesPayment = paymentFilter === '' || tx.payment === paymentFilter;
+                const matchesCategory = categoryFilter === '' || tx.category === categoryFilter;
+                return matchesSearch && matchesType && matchesPayment && matchesCategory;
+            });
+
+            const tbody = document.getElementById('transactions-table-body');
+            const noTx = document.getElementById('no-transactions');
+            tbody.innerHTML = '';
+
+            if (filtered.length === 0) {
+                noTx.classList.remove('hidden');
+                return;
+            } else {
+                noTx.classList.add('hidden');
+            }
+
+            filtered.forEach(tx => {
+                const isInc = tx.type === 'income';
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-white/5 transition-all border-b border-darkBorder/50';
+                tr.innerHTML = `
+                    <td class="py-3 px-4">
+                        <div class="font-medium text-white">${escapeHTML(tx.description)}</div>
+                        <div class="text-[11px] text-gray-400">${escapeHTML(tx.category)}</div>
+                    </td>
+                    <td class="py-3 px-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-white/5 border border-darkBorder text-gray-300">
+                            ${escapeHTML(tx.payment)}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-gray-300 text-xs">${escapeHTML(tx.date)}</td>
+                    <td class="py-3 px-4 text-right font-bold ${isInc ? 'text-emerald-400' : 'text-red-400'}">
+                        ${isInc ? '+' : '-'}${formatCurrency(tx.amount)}
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                        <div class="flex items-center justify-center space-x-2">
+                            <button onclick="openTransactionModal('${tx.id}')" class="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 flex items-center justify-center transition-all" title="Editar">
+                                <i class="fa-solid fa-pen text-xs"></i>
+                            </button>
+                            <button onclick="deleteTransaction('${tx.id}')" class="w-7 h-7 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 flex items-center justify-center transition-all" title="Eliminar">
+                                <i class="fa-solid fa-trash text-xs"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderRecentTransactions() {
+            const container = document.getElementById('recent-transactions-list');
+            container.innerHTML = '';
+            const recent = appData.transactions.slice(0, 5);
+
+            if (recent.length === 0) {
+                container.innerHTML = '<p class="text-xs text-gray-400 text-center py-4">No hay transacciones recientes.</p>';
+                return;
+            }
+
+            recent.forEach(tx => {
+                const isInc = tx.type === 'income';
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between p-3 rounded-xl bg-darkBg/40 border border-darkBorder';
+                div.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl ${isInc ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'} flex items-center justify-center">
+                            <i class="fa-solid ${isInc ? 'fa-arrow-down' : 'fa-arrow-up'} text-sm"></i>
+                        </div>
+                        <div>
+                            <div class="font-medium text-sm text-white">${escapeHTML(tx.description)}</div>
+                            <div class="text-[11px] text-gray-400">${escapeHTML(tx.category)} • ${escapeHTML(tx.payment)}</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-bold text-sm ${isInc ? 'text-emerald-400' : 'text-red-400'}">${isInc ? '+' : '-'}${formatCurrency(tx.amount)}</div>
+                        <div class="text-[10px] text-gray-400">${escapeHTML(tx.date)}</div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function openBudgetModal() {
+            const list = document.getElementById('budget-inputs-list');
+            list.innerHTML = '';
+            
+            const categories = ["Alimentación", "Vivienda", "Transporte", "Entretenimiento", "Salud", "Otros"];
+            categories.forEach(cat => {
+                const limit = appData.budgets[cat] || 0;
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between space-x-3';
+                div.innerHTML = `
+                    <label class="text-sm font-medium text-gray-300 w-1/2">${cat}</label>
+                    <div class="relative w-1/2">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 text-xs">$</span>
+                        <input type="number" step="1" id="budget-cat-${cat}" value="${limit}" class="w-full pl-7 pr-3 py-2 bg-darkBg/60 border border-darkBorder rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-white font-semibold">
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+
+            document.getElementById('budget-modal').classList.remove('hidden');
+        }
+
+        function closeBudgetModal() {
+            document.getElementById('budget-modal').classList.add('hidden');
+        }
+
+        function saveBudgets(e) {
+            e.preventDefault();
+            const categories = ["Alimentación", "Vivienda", "Transporte", "Entretenimiento", "Salud", "Otros"];
+            categories.forEach(cat => {
+                const val = parseFloat(document.getElementById(`budget-cat-${cat}`).value) || 0;
+                appData.budgets[cat] = val;
+            });
+            saveToLocalStorage();
+            closeBudgetModal();
+            renderBudgets();
+            showToast('Presupuestos', 'Límites mensuales actualizados.');
+        }
+
+        function renderBudgets() {
+            const container = document.getElementById('budgets-container');
+            container.innerHTML = '';
+
+            const spentMap = {};
+            appData.transactions.forEach(tx => {
+                if (tx.type === 'expense') {
+                    spentMap[tx.category] = (spentMap[tx.category] || 0) + parseFloat(tx.amount);
+                }
+            });
+
+            const categories = Object.keys(appData.budgets);
+            categories.forEach(cat => {
+                const limit = appData.budgets[cat] || 1;
+                const spent = spentMap[cat] || 0;
+                const pct = Math.min(Math.round((spent / limit) * 100), 100);
+                
+                let colorClass = 'bg-emerald-500';
+                let badgeClass = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30';
+                let statusText = 'Normal';
+                if (spent >= limit) {
+                    colorClass = 'bg-red-500';
+                    badgeClass = 'text-red-400 bg-red-500/10 border-red-500/30';
+                    statusText = 'Excedido';
+                } else if (spent >= limit * 0.75) {
+                    colorClass = 'bg-amber-500';
+                    badgeClass = 'text-amber-400 bg-amber-500/10 border-amber-500/30';
+                    statusText = 'Precaución';
+                }
+
+                const card = document.createElement('div');
+                card.className = 'glass-card rounded-2xl p-4 flex flex-col justify-between';
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-bold text-white text-base">${cat}</h4>
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${badgeClass}">${statusText}</span>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-400 mb-2">
+                            <span>Gastado: <strong class="text-white">${formatCurrency(spent)}</strong></span>
+                            <span>Límite: <strong class="text-gray-300">${formatCurrency(limit)}</strong></span>
+                        </div>
+                        <div class="w-full bg-darkBg/80 rounded-full h-2.5 overflow-hidden border border-darkBorder mb-3">
+                            <div class="${colorClass} h-2.5 rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between text-[11px] text-gray-400 pt-2 border-t border-darkBorder">
+                        <span>Progreso: ${pct}%</span>
+                        <span>Restante: <strong class="${limit - spent >= 0 ? 'text-emerald-400' : 'text-red-400'}">${formatCurrency(limit - spent)}</strong></span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function openGoalModal(goalId = null) {
+            const modal = document.getElementById('goal-modal');
+            modal.classList.remove('hidden');
+            if (goalId) {
+                document.getElementById('goal-modal-title').innerText = 'Editar Meta de Ahorro';
+                const g = appData.goals.find(item => item.id === goalId);
+                if (g) {
+                    document.getElementById('goal-id').value = g.id;
+                    document.getElementById('goal-name').value = g.name;
+                    document.getElementById('goal-target').value = g.target;
+                    document.getElementById('goal-current').value = g.current;
+                    document.getElementById('goal-deadline').value = g.deadline;
+                    document.getElementById('goal-category').value = g.category;
+                }
+            } else {
+                document.getElementById('goal-modal-title').innerText = 'Nueva Meta de Ahorro';
+                document.getElementById('goal-form').reset();
+                document.getElementById('goal-id').value = '';
+                document.getElementById('goal-current').value = '0';
+                document.getElementById('goal-deadline').valueAsDate = new Date(Date.now() + 90*24*60*60*1000);
+            }
+        }
+
+        function closeGoalModal() {
+            document.getElementById('goal-modal').classList.add('hidden');
+        }
+
+        function saveGoal(e) {
+            e.preventDefault();
+            const id = document.getElementById('goal-id').value;
+            const name = document.getElementById('goal-name').value;
+            const target = parseFloat(document.getElementById('goal-target').value);
+            const current = parseFloat(document.getElementById('goal-current').value) || 0;
+            const deadline = document.getElementById('goal-deadline').value;
+            const category = document.getElementById('goal-category').value;
+
+            if (id) {
+                const idx = appData.goals.findIndex(g => g.id === id);
+                if (idx !== -1) {
+                    appData.goals[idx] = { id, name, target, current, deadline, category };
+                }
+                showToast('Actualizado', 'Meta de ahorro modificada.');
+            } else {
+                const newGoal = {
+                    id: 'goal_' + Date.now(),
+                    name, target, current, deadline, category
+                };
+                appData.goals.push(newGoal);
+                showToast('Creado', 'Nueva meta de ahorro establecida.');
+            }
+
+            saveToLocalStorage();
+            closeGoalModal();
+            renderGoals();
+        }
+
+        function deleteGoal(id) {
+            if (confirm('¿Eliminar esta meta de ahorro?')) {
+                appData.goals = appData.goals.filter(g => g.id !== id);
+                saveToLocalStorage();
+                renderGoals();
+                showToast('Eliminado', 'Meta borrada.', true);
+            }
+        }
+
+        function openFundModal(goalId, action) {
+            document.getElementById('fund-goal-id').value = goalId;
+            document.getElementById('fund-action').value = action;
+            const goal = appData.goals.find(g => g.id === goalId);
+            if (goal) {
+                document.getElementById('fund-modal-title').innerText = action === 'add' ? `Abonar a "${goal.name}"` : `Retirar de "${goal.name}"`;
+                document.getElementById('fund-goal-subtitle').innerText = `Progreso actual: ${formatCurrency(goal.current)} / ${formatCurrency(goal.target)}`;
+            }
+            document.getElementById('fund-amount').value = '';
+            document.getElementById('fund-modal').classList.remove('hidden');
+        }
+
+        function closeFundModal() {
+            document.getElementById('fund-modal').classList.add('hidden');
+        }
+
+        function processFund(e) {
+            e.preventDefault();
+            const goalId = document.getElementById('fund-goal-id').value;
+            const action = document.getElementById('fund-action').value;
+            const amount = parseFloat(document.getElementById('fund-amount').value) || 0;
+
+            const goal = appData.goals.find(g => g.id === goalId);
+            if (goal) {
+                if (action === 'add') {
+                    goal.current += amount;
+                    showToast('Abono Exitoso', `Se han sumado ${formatCurrency(amount)} a la meta.`);
+                } else {
+                    goal.current = Math.max(0, goal.current - amount);
+                    showToast('Retiro Exitoso', `Se han retirado ${formatCurrency(amount)} de la meta.`);
+                }
+                saveToLocalStorage();
+                renderGoals();
+            }
+            closeFundModal();
+        }
+
+        function renderGoals() {
+            const container = document.getElementById('savings-container');
+            const noGoals = document.getElementById('no-goals');
+            container.innerHTML = '';
+
+            if (appData.goals.length === 0) {
+                noGoals.classList.remove('hidden');
+                return;
+            } else {
+                noGoals.classList.add('hidden');
+            }
+
+            appData.goals.forEach(goal => {
+                const pct = Math.min(Math.round((goal.current / goal.target) * 100), 100);
+
+                const card = document.createElement('div');
+                card.className = 'glass-card rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden';
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-violet-500/10 text-violet-400 border border-violet-500/30">${escapeHTML(goal.category)}</span>
+                            <div class="flex items-center space-x-1">
+                                <button onclick="openGoalModal('${goal.id}')" class="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 flex items-center justify-center transition-all" title="Editar">
+                                    <i class="fa-solid fa-pen text-xs"></i>
+                                </button>
+                                <button onclick="deleteGoal('${goal.id}')" class="w-7 h-7 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center justify-center transition-all" title="Eliminar">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <h3 class="font-bold text-white text-base mb-1">${escapeHTML(goal.name)}</h3>
+                        <div class="flex justify-between text-xs text-gray-400 mb-2">
+                            <span>Ahorrado: <strong class="text-emerald-400">${formatCurrency(goal.current)}</strong></span>
+                            <span>Meta: <strong class="text-white">${formatCurrency(goal.target)}</strong></span>
+                        </div>
+                        <div class="w-full bg-darkBg/80 rounded-full h-3 overflow-hidden border border-darkBorder mb-3">
+                            <div class="bg-gradient-to-r from-violet-600 to-indigo-500 h-3 rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between text-[11px] text-gray-400 mb-3">
+                            <span>Límite: ${escapeHTML(goal.deadline)}</span>
+                            <span class="font-bold text-indigo-400">${pct}% completado</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="openFundModal('${goal.id}', 'add')" class="py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 font-semibold text-xs transition-all flex items-center justify-center space-x-1">
+                                <i class="fa-solid fa-plus text-[10px]"></i><span>Abonar</span>
+                            </button>
+                            <button onclick="openFundModal('${goal.id}', 'withdraw')" class="py-2 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 font-semibold text-xs transition-all flex items-center justify-center space-x-1">
+                                <i class="fa-solid fa-minus text-[10px]"></i><span>Retirar</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function initCharts() {
+            const ctxFlow = document.getElementById('monthlyFlowChart').getContext('2d');
+            monthlyFlowChartInstance = new Chart(ctxFlow, {
+                type: 'bar',
+                data: {
+                    labels: ['Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre'],
+                    datasets: [
+                        {
+                            label: 'Ingresos',
+                            data: [2800, 3100, 2950, 3400, 3200, 3650],
+                            backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                            borderColor: '#10b981',
+                            borderWidth: 1,
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Gastos',
+                            data: [2100, 2300, 1900, 2500, 2200, 2150],
+                            backgroundColor: 'rgba(239, 68, 68, 0.6)',
+                            borderColor: '#ef4444',
+                            borderWidth: 1,
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#9ca3af', font: { family: 'Inter', size: 11 } }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#9ca3af', font: { size: 10 } } },
+                        y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#9ca3af', font: { size: 10 } } }
+                    }
+                }
+            });
+
+            const ctxCat = document.getElementById('categoryChart').getContext('2d');
+            categoryChartInstance = new Chart(ctxCat, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Alimentación', 'Vivienda', 'Transporte', 'Entretenimiento', 'Salud', 'Otros'],
+                    datasets: [{
+                        data: [400, 800, 200, 150, 200, 100],
+                        backgroundColor: [
+                            '#6366f1',
+                            '#8b5cf6',
+                            '#ec4899',
+                            '#f59e0b',
+                            '#10b981',
+                            '#3b82f6'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#9ca3af', font: { family: 'Inter', size: 10 }, boxWidth: 12 }
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+
+        function updateCharts() {
+            if (!categoryChartInstance) return;
+
+            const catTotals = { "Alimentación": 0, "Vivienda": 0, "Transporte": 0, "Entretenimiento": 0, "Salud": 0, "Otros": 0 };
+            appData.transactions.forEach(tx => {
+                if (tx.type === 'expense') {
+                    if (catTotals[tx.category] !== undefined) {
+                        catTotals[tx.category] += tx.amount;
+                    } else {
+                        catTotals["Otros"] = (catTotals["Otros"] || 0) + tx.amount;
+                    }
+                }
+            });
+
+            categoryChartInstance.data.datasets[0].data = Object.values(catTotals);
+            categoryChartInstance.update();
+        }
+
+        function openExportModal() {
+            document.getElementById('export-modal').classList.remove('hidden');
+        }
+
+        function closeExportModal() {
+            document.getElementById('export-modal').classList.add('hidden');
+        }
+
+        function exportJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `financeflow_backup_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+            showToast('Exportado', 'Archivo JSON generado correctamente.');
+            closeExportModal();
+        }
+
+        function exportCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,ID,Tipo,Monto,Categoria,MetodoPago,Fecha,Descripcion\r\n";
+            appData.transactions.forEach(tx => {
+                const row = [tx.id, tx.type, tx.amount, `"${tx.category}"`, `"${tx.payment}"`, tx.date, `"${tx.description}"`];
+                csvContent += row.join(",") + "\r\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", encodedUri);
+            dlAnchor.setAttribute("download", `financeflow_transactions_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+            showToast('Exportado', 'Archivo CSV generado correctamente.');
+            closeExportModal();
+        }
+
+        function importJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (parsed && parsed.transactions) {
+                        appData = parsed;
+                        saveToLocalStorage();
+                        updateDashboard();
+                        renderTransactions();
+                        renderBudgets();
+                        renderGoals();
+                        showToast('Importado', 'Datos cargados exitosamente.');
+                        closeExportModal();
+                    } else {
+                        showToast('Error', 'Formato de archivo inválido.', true);
+                    }
+                } catch(err) {
+                    showToast('Error', 'No se pudo leer el archivo JSON.', true);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+    </script>
+</body>
+</html>
